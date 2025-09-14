@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+ <title>jmischler72 - Personal Website</title>
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+ <div class="header">
+  <div class="profile-section">
+   <div class="profile-image-container">
+    <img src="/static/images/profile.png" alt="jmischler72 profile picture" class="profile-image">
+    <div class="arrow-annotation">
+     <div class="arrow-text">pov: moi dans la dernière vidéo</div>
+    </div>
+   </div>
+   <div class="profile-info">
+    <h1>jmischler72</h1>
+   </div>
+  </div>
+  
+  <ul class="links">
+   <li><a href='https://www.youtube.com/@jmischler72'>youtube</a></li>
+   <li><a href='https://jmischler72.github.io/cv/'>cv</a></li>
+  </ul>
+  <h2>Projects</h2>
+  <ul class="links">
+   <li><a href='https://tetrarena.net'>tetrarena</a></li>
+   <li><a href='https://cazvas.fr'>cazvas</a></li>
+   <li><a href='https://modmiinext.j0xff.me/'>modmiinext</a></li>
+   <li><a href='https://ezproprio.com/'>ezproprio</a></li>
+  </ul>
+ </div>
+ 
+ <div style="text-align: center;">
+  <!-- <h2>Interactive ASCII Grid</h2> -->
+  <p><strong>Click anywhere on the grid below to leave your mark!</strong></p>
+  <p><em>Hover over the red characters (☺) to see messages from other visitors.</em></p>
+  <div id="ascii-grid" class="ascii-grid"></div>
+ </div>
+ 
+
+
+ <!-- Modal for grid entry -->
+ <div id="entryModal" class="modal">
+  <div class="modal-content">
+   <h3>Leave your mark</h3>
+   <p>Position: <span id="positionText"></span></p>
+   <input type="text" id="nameInput" placeholder="Your name" maxlength="20">
+   <textarea id="messageInput" placeholder="Your message" maxlength="100" rows="3"></textarea>
+   <div>
+    <button onclick="submitGridEntry()">Submit</button>
+    <button onclick="closeModal()">Cancel</button>
+   </div>
+  </div>
+ </div>
+
+ <div id="tooltip" class="tooltip"></div>
+
+ <script src="/static/script.js"></script>
+</body>
+</html>

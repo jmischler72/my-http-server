@@ -2,6 +2,7 @@ package main
 
 import (
  "database/sql"   // Package for SQL database interactions
+ "encoding/json"  // Package for JSON encoding/decoding
  "fmt"            // Package for formatted I/O
  "log"            // Package for logging
  "net/http"       // Package for HTTP client and server
@@ -10,14 +11,20 @@ import (
  _ "github.com/mattn/go-sqlite3" // SQLite driver
 )
 
-// Todo represents a task in the todo list
-type Todo struct {
- ID    int
- Title string
+// GridEntry represents a user's entry in the ASCII grid
+type GridEntry struct {
+ ID       int    `json:"id"`
+ X        int    `json:"x"`
+ Y        int    `json:"y"`
+ Name     string `json:"name"`
+ Message  string `json:"message"`
 }
 
 // DB is a global variable for the SQLite database connection
 var DB *sql.DB
+
+// tmpl is a global variable for the HTML template
+var tmpl *template.Template
 
 // initDB initializes the SQLite database and creates the todos table if it doesn't exist
 func initDB() {
@@ -27,78 +34,138 @@ func initDB() {
   log.Fatal(err) // Log an error and stop the program if the database can't be opened
  }
 
- // SQL statement to create the todos table if it doesn't exist
- sqlStmt := `
- DROP TABLE IF EXISTS todos;
- CREATE TABLE  todos (
+ // SQL statement to create the grid_entries table for ASCII grid
+ gridStmt := `
+ CREATE TABLE IF NOT EXISTS grid_entries (
   id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-  title TEXT,
+  x INTEGER NOT NULL,
+  y INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  message TEXT NOT NULL,
   timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
  );`
 
- _, err = DB.Exec(sqlStmt)
+ _, err = DB.Exec(gridStmt)
  if err != nil {
-  log.Fatalf("Error creating table: %q: %s\n", err, sqlStmt) // Log an error if table creation fails
+  log.Fatalf("Error creating grid_entries table: %q: %s\n", err, gridStmt)
+ }
+
+ // Load HTML template
+ tmpl, err = template.ParseFiles("templates/index.html")
+ if err != nil {
+  log.Fatalf("Error loading template: %v", err)
  }
 }
 
-// indexHandler serves the main page and displays all todos
+// indexHandler serves the main page
 func indexHandler(w http.ResponseWriter, r *http.Request) {
- // Query the database to get all todos
- rows, err := DB.Query("SELECT id, title FROM todos ORDER BY timestamp DESC LIMIT 1;")
- if err != nil { 
-  http.Error(w, err.Error(), http.StatusInternalServerError) // Return an HTTP 500 error if the query fails
+ // Execute the HTML template
+ tmpl.Execute(w, nil) // Render the template
+}
+
+
+
+// gridEntriesHandler returns all grid entries as JSON
+func gridEntriesHandler(w http.ResponseWriter, r *http.Request) {
+ if r.Method != "GET" {
+  http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
   return
  }
- defer rows.Close() // Ensure rows are closed after processing
 
- todos := []Todo{} // Slice to store todos
+ rows, err := DB.Query("SELECT id, x, y, name, message FROM grid_entries ORDER BY timestamp DESC")
+ if err != nil {
+  http.Error(w, err.Error(), http.StatusInternalServerError)
+  return
+ }
+ defer rows.Close()
+
+ entries := []GridEntry{}
  for rows.Next() {
-  var todo Todo
-  if err := rows.Scan(&todo.ID, &todo.Title); err != nil {
-   http.Error(w, err.Error(), http.StatusInternalServerError) // Return an HTTP 500 error if scanning fails
+  var entry GridEntry
+  if err := rows.Scan(&entry.ID, &entry.X, &entry.Y, &entry.Name, &entry.Message); err != nil {
+   http.Error(w, err.Error(), http.StatusInternalServerError)
    return
   }
-  todos = append(todos, todo)
+  entries = append(entries, entry)
  }
 
- // Parse and execute the HTML template with the todos data
- tmpl := template.Must(template.New("index").Parse(`
- <!DOCTYPE html>
- <html>
- <head>
-  <title>Todo List</title>
- </head>
- <body>
-    <h1>jmischler72</h1><ul><li><a href='https://www.youtube.com/@jmischler72'>yt</a></li><li><a href='https://jmischler72.github.io/cv/'>cv</a></li></ul>
-    <p>leave a message for the next person</p>
-    <form action="/change" method="POST">
-   <input type="text" name="title" placeholder="message" required>
-   <button type="submit">send</button>
-  </form>
-  <ul>
-   {{range .}}
-   <li>{{.Title}}</li>
-   {{end}}
-  </ul>
- </body>
- </html>
- `))
-
- tmpl.Execute(w, todos) // Render the template with the list of todos
+ w.Header().Set("Content-Type", "application/json")
+ json.NewEncoder(w).Encode(entries)
 }
 
-// createHandler handles the creation of a new todo
-func createHandler(w http.ResponseWriter, r *http.Request) {
- if r.Method == "POST" {
-  title := r.FormValue("title") // Get the title from the form data
-  _, err := DB.Exec("INSERT INTO todos(title) VALUES(?)", title) // Insert the new todo into the database
-  if err != nil {
-   http.Error(w, err.Error(), http.StatusInternalServerError) // Return an HTTP 500 error if insertion fails
-   return
-  }
-  http.Redirect(w, r, "/", http.StatusSeeOther) // Redirect to the main page after successful creation
+// gridEntryHandler handles creating a new grid entry
+func gridEntryHandler(w http.ResponseWriter, r *http.Request) {
+ if r.Method != "POST" {
+  http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+  return
  }
+
+ var entry GridEntry
+ if err := json.NewDecoder(r.Body).Decode(&entry); err != nil {
+  w.Header().Set("Content-Type", "application/json")
+  json.NewEncoder(w).Encode(map[string]interface{}{
+   "success": false,
+   "error":   "Invalid JSON data",
+  })
+  return
+ }
+
+ // Validate input
+ if entry.X < 0 || entry.X >= 80 || entry.Y < 0 || entry.Y >= 25 {
+  w.Header().Set("Content-Type", "application/json")
+  json.NewEncoder(w).Encode(map[string]interface{}{
+   "success": false,
+   "error":   "Position out of bounds",
+  })
+  return
+ }
+
+ if entry.Name == "" || entry.Message == "" {
+  w.Header().Set("Content-Type", "application/json")
+  json.NewEncoder(w).Encode(map[string]interface{}{
+   "success": false,
+   "error":   "Name and message are required",
+  })
+  return
+ }
+
+ // Check if position is already occupied
+ var count int
+ err := DB.QueryRow("SELECT COUNT(*) FROM grid_entries WHERE x = ? AND y = ?", entry.X, entry.Y).Scan(&count)
+ if err != nil {
+  w.Header().Set("Content-Type", "application/json")
+  json.NewEncoder(w).Encode(map[string]interface{}{
+   "success": false,
+   "error":   "Database error",
+  })
+  return
+ }
+
+ if count > 0 {
+  w.Header().Set("Content-Type", "application/json")
+  json.NewEncoder(w).Encode(map[string]interface{}{
+   "success": false,
+   "error":   "Position already occupied",
+  })
+  return
+ }
+
+ // Insert the new grid entry
+ _, err = DB.Exec("INSERT INTO grid_entries(x, y, name, message) VALUES(?, ?, ?, ?)", 
+  entry.X, entry.Y, entry.Name, entry.Message)
+ if err != nil {
+  w.Header().Set("Content-Type", "application/json")
+  json.NewEncoder(w).Encode(map[string]interface{}{
+   "success": false,
+   "error":   "Failed to save entry",
+  })
+  return
+ }
+
+ w.Header().Set("Content-Type", "application/json")
+ json.NewEncoder(w).Encode(map[string]interface{}{
+  "success": true,
+ })
 }
 
 
@@ -109,7 +176,11 @@ func main() {
 
  // Route the handlers for each URL path
  http.HandleFunc("/", indexHandler)
- http.HandleFunc("/change", createHandler)
+ http.HandleFunc("/grid-entries", gridEntriesHandler)
+ http.HandleFunc("/grid-entry", gridEntryHandler)
+ 
+ // Serve static files (CSS, JS)
+ http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
  fmt.Println("Server is running at http://localhost:8080")
  log.Fatal(http.ListenAndServe(":8080", nil)) // Start the server on port 8080

@@ -38,39 +38,6 @@ body {
  background: #f0f0f0;
 }
 
-.arrow-annotation {
- position: absolute;
- top: -15px;
- right: -120px;
- z-index: 10;
-}
-
-
-.arrow-text {
- background: #ff0000;
- color: white;
- padding: 4px 8px;
- border-radius: 4px;
- font-size: 11px;
- font-weight: bold;
- white-space: nowrap;
- box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
- position: relative;
- left: -30px;
-}
-
-.arrow-text::before {
- content: '';
- position: absolute;
- bottom: -4px;
- left: 20px;
- width: 0;
- height: 0;
- border-left: 4px solid transparent;
- border-right: 4px solid transparent;
- border-top: 4px solid #ff0000;
-}
-
 .profile-info {
  text-align: left;
 }

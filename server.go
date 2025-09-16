@@ -29,7 +29,7 @@ var tmpl *template.Template
 // initDB initializes the SQLite database and creates the todos table if it doesn't exist
 func initDB() {
  var err error
- DB, err = sql.Open("sqlite3", "./app.db") // Open a connection to the SQLite database file named app.db
+ DB, err = sql.Open("sqlite3", "./db/app.db") // Open a connection to the SQLite database file named app.db
  if err != nil {
   log.Fatal(err) // Log an error and stop the program if the database can't be opened
  }

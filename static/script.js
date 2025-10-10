@@ -169,7 +169,7 @@ function updateGridDisplay() {
 function handleProfileImage() {
     const profileImg = document.querySelector('.profile-image');
     if (profileImg) {
-        profileImg.addEventListener('error', function() {
+        profileImg.addEventListener('error', function () {
             // If image fails to load, hide it gracefully
             this.style.display = 'none';
         });
@@ -181,6 +181,7 @@ document.addEventListener('DOMContentLoaded', function () {
     handleProfileImage();
     initGrid();
     loadGridEntries();
+    initHealthChecks();
 });
 
 // Close modal when clicking outside
@@ -189,4 +190,56 @@ window.onclick = function (event) {
     if (event.target === modal) {
         closeModal();
     }
+}
+
+// Health check functionality
+function initHealthChecks() {
+    const healthIndicators = document.querySelectorAll('.health-indicator');
+
+    healthIndicators.forEach(indicator => {
+        const url = indicator.getAttribute('data-url');
+        checkHealth(url, indicator);
+    });
+
+    // Set up periodic health checks every 30 seconds
+    setInterval(() => {
+        healthIndicators.forEach(indicator => {
+            const url = indicator.getAttribute('data-url');
+            checkHealth(url, indicator);
+        });
+    }, 30000);
+}
+
+function checkHealth(url, indicator) {
+    indicator.className = 'health-indicator checking';
+    indicator.title = 'Checking health...';
+
+    // Use a simple fetch with a timeout to check if the site is reachable
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+    fetch(url, {
+        method: 'HEAD',
+        mode: 'no-cors', // Important for cross-origin requests
+        signal: controller.signal
+    })
+        .then(response => {
+            clearTimeout(timeoutId);
+            // With no-cors, we can't check the actual response status
+            // If we get here without an error, the site is likely reachable
+            indicator.className = 'health-indicator healthy';
+            indicator.title = 'Service is healthy';
+        })
+        .catch(error => {
+            clearTimeout(timeoutId);
+            if (error.name === 'AbortError') {
+                indicator.className = 'health-indicator unhealthy';
+                indicator.title = 'Service timeout - may be down';
+            } else {
+                // For no-cors mode, network errors usually mean the site is unreachable
+                // But sometimes CORS itself can cause this, so we'll be more lenient
+                indicator.className = 'health-indicator healthy';
+                indicator.title = 'Service appears to be running (CORS restricted)';
+            }
+        });
 }

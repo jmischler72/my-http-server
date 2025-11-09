@@ -6,34 +6,41 @@
  <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
- <div class="header">
-  <div class="profile-section">
-   <div class="profile-image-container">
-    <img src="/static/images/profile.png" alt="jmischler72 profile picture" class="profile-image">
+ <div class="main-container">
+  <!-- Background ASCII Grid -->
+  <div id="ascii-grid" class="ascii-grid background-grid"></div>
+  
+  <!-- Centered Header Content -->
+  <div class="header-overlay" id="headerOverlay">
+   <button class="toggle-button" onclick="toggleHeader()" title="Hide/Show Header">×</button>
+   <div class="header">
+    <div class="profile-section">
+     <div class="profile-image-container">
+      <img src="/static/images/profile.png" alt="jmischler72 profile picture" class="profile-image">
+     </div>
+     <div class="profile-info">
+      <h1>jmischler72</h1>
+     </div>
+    </div>
+    
+    <h2>links</h2>
+    <ul class="links">
+     <li><a href='https://www.youtube.com/@jmischler72'>youtube</a></li>
+     <!-- <li><a href='https://jmischler72.github.io/cv/'>cv</a></li> -->
+     <li><a href='https://github.com/jmischler72'>github</a></li>
+    </ul>
+    <h2>projects</h2>
+    <ul class="links projects">
+     <li><a href='https://cazvas.fr'>cazvas</a><span class="health-indicator" data-url="https://cazvas.fr"></span></li>
+     <li><a href='https://modmiinext.j0xff.me/'>modmiinext</a><span class="health-indicator" data-url="https://modmiinext.j0xff.me/"></span></li>
+     <li><a href='https://tetrarena.j0xff.me/'>tetrarena</a><span class="health-indicator" data-url="https://tetrarena.j0xff.me/"></span></li>
+    </ul>
    </div>
-   <div class="profile-info">
-    <h1>jmischler72</h1>
-   </div>
+
   </div>
   
-  <ul class="links">
-   <li><a href='https://www.youtube.com/@jmischler72'>youtube</a></li>
-   <!-- <li><a href='https://jmischler72.github.io/cv/'>cv</a></li> -->
-   <li><a href='https://github.com/jmischler72'>github</a></li>
-  </ul>
-  <h2>Projects</h2>
-  <ul class="links projects">
-   <li><a href='https://cazvas.fr'>cazvas</a><span class="health-indicator" data-url="https://cazvas.fr"></span></li>
-   <li><a href='https://modmiinext.j0xff.me/'>modmiinext</a><span class="health-indicator" data-url="https://modmiinext.j0xff.me/"></span></li>
-   <li><a href='https://tetrarena.j0xff.me/'>tetrarena</a><span class="health-indicator" data-url="https://tetrarena.j0xff.me/"></span></li>
-  </ul>
- </div>
- 
- <div style="text-align: center;">
-  <!-- <h2>Interactive ASCII Grid</h2> -->
-  <p><strong>Click anywhere on the grid below to leave your mark!</strong></p>
-  <p><em>Hover over the red characters (☺) to see messages from other visitors.</em></p>
-  <div id="ascii-grid" class="ascii-grid"></div>
+  <!-- Show Header Button (hidden by default) -->
+  <button class="show-header-button" id="showHeaderButton" onclick="toggleHeader()" style="display: none;" title="Show Header">i</button>
  </div>
  
 

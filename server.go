@@ -111,7 +111,7 @@ func gridEntryHandler(w http.ResponseWriter, r *http.Request) {
  }
 
  // Validate input
- if entry.X < 0 || entry.X >= 80 || entry.Y < 0 || entry.Y >= 25 {
+ if entry.X < 0 || entry.X >= 80 || entry.Y < 0 || entry.Y >= 200 {
   w.Header().Set("Content-Type", "application/json")
   json.NewEncoder(w).Encode(map[string]interface{}{
    "success": false,

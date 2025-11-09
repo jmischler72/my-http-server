@@ -1,11 +1,25 @@
-const GRID_WIDTH = 80;
-const GRID_HEIGHT = 25;
+// Calculate grid dimensions based on viewport
+function calculateGridDimensions() {
+    const charWidth = 8; // Approximate width of a character in pixels
+    const charHeight = 14; // Approximate height of a character in pixels
+
+    const GRID_WIDTH = Math.floor(window.innerWidth / charWidth);
+    const GRID_HEIGHT = Math.floor(window.innerHeight / charHeight);
+
+    return { width: GRID_WIDTH, height: GRID_HEIGHT };
+}
+
 let selectedX = 0;
 let selectedY = 0;
 let gridEntries = [];
+let GRID_WIDTH, GRID_HEIGHT;
 
 // Initialize the ASCII grid
 function initGrid() {
+    const dimensions = calculateGridDimensions();
+    GRID_WIDTH = dimensions.width;
+    GRID_HEIGHT = dimensions.height;
+
     const grid = document.getElementById('ascii-grid');
     let gridHTML = '';
 
@@ -165,6 +179,25 @@ function updateGridDisplay() {
     });
 }
 
+// Toggle header overlay visibility
+function toggleHeader() {
+    const headerOverlay = document.getElementById('headerOverlay');
+    const showButton = document.getElementById('showHeaderButton');
+    const gridInstructions = document.getElementById('gridInstructions');
+
+    if (headerOverlay.classList.contains('hidden')) {
+        // Show header
+        headerOverlay.classList.remove('hidden');
+        showButton.style.display = 'none';
+        gridInstructions.style.display = 'none';
+    } else {
+        // Hide header
+        headerOverlay.classList.add('hidden');
+        showButton.style.display = 'block';
+        gridInstructions.style.display = 'block';
+    }
+}
+
 // Handle profile image loading
 function handleProfileImage() {
     const profileImg = document.querySelector('.profile-image');
@@ -182,6 +215,19 @@ document.addEventListener('DOMContentLoaded', function () {
     initGrid();
     loadGridEntries();
     initHealthChecks();
+
+    // Add keyboard shortcut to toggle header (Escape key)
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            toggleHeader();
+        }
+    });
+});
+
+// Handle window resize to rebuild grid
+window.addEventListener('resize', function () {
+    initGrid();
+    loadGridEntries(); // Reload entries to position them correctly
 });
 
 // Close modal when clicking outside
